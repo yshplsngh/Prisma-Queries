@@ -4,29 +4,117 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// generator
 generator client {
   provider = "prisma-client-js"
 }
 
+// datasource
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id Int @id @default(autoincrement())
-  email String  @unique
-  name String?
-  posts Post[]
+// Balance BigInt  // for big number
+// Preference Json? // to store json data and ? mean optional
+// image      Bytes // to store raw data like buffer64
+// rating Decimal // for long floating number : 1.23434313513
+// isAdmin Boolean
+// @id to make table primary column
+
+// one to many
+
+model User {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  email String @unique
+  age   Int
+  Posts Post[]
 }
 
-model Post{
-  id Int @id @default(autoincrement())
-  title String
-  content String?
-  published Boolean @default(false)
-  author User @relation(fields: [authorId],references: [id])
-  authorId Int
-  @@unique([title])  // you can create multiple table unique
-  @@index([title], name: "title")  // apply index to title column
+model Post {
+  id        Int      @id @default(autoincrement())
+  rating    Float // for normal cases
+  createdAt DateTime
+  updatedAt DateTime @updatedAt
+  Auther    User     @relation(fields: [AutherId], references: [id])
+  AutherId  Int
 }
+
+//
+model User1 {
+  id            Int     @id @default(autoincrement())
+  name          String  @unique
+  email         String  @unique
+  isAdmin       Boolean
+  WrittenPosts  Post1[] @relation("WrittenPost")
+  FavoritePosts Post1[] @relation("FavoritePost")
+}
+
+model Post1 {
+  id             Int        @id @default(autoincrement())
+  rating         Float // for normal cases
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  Auther         User1      @relation("WrittenPost", fields: [AutherId], references: [id])
+  AutherId       Int
+  FavoritePost   User1?     @relation("FavoritePost", fields: [FavoritePostId], references: [id])
+  FavoritePostId Int?
+  category       Category[]
+}
+
+// many to many
+model Category {
+  id    Int     @id @default(autoincrement())
+  posts Post1[]
+}
+
+// one to one
+model User3 {
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  userPreference   Subscribe? @relation(fields: [userPreferenceId], references: [id])
+  userPreferenceId Int?       @unique
+}
+
+model Subscribe {
+  id            Int     @id @default(autoincrement())
+  newsSubscribe Boolean
+  user          User3?
+}
+
+model User4 {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String
+  role  Role   @default(BASIC)
+
+  // generators
+  @@unique([email, name]) // when we want to apply unique at mutiple column
+  @@index([email]) // help in finding email faster
+}
+
+enum Role {
+  BASIC
+  EDITOR
+  ADMIN
+}
+
+// model User{
+//   id Int @id @default(autoincrement())
+//   email String  @unique
+//   name String?
+//   posts Post[]
+// }
+//
+// model Post{
+//   id Int @id @default(autoincrement())
+//   title String
+//   content String?
+//   published Boolean @default(false)
+//   author User @relation(fields: [authorId],references: [id])
+//   authorId Int
+//   @@unique([title])  // you can create multiple table unique
+//   @@index([title], name: "title")  // apply index to title column
+// }
